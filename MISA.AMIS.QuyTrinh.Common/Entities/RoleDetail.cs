@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace MISA.AMIS.QuyTrinh.Common.Entities
 {
+    /// <summary>
+    /// Chi tiết vai trò
+    /// </summary>
     public class RoleDetail : BaseEntity
     {
         /// <summary>

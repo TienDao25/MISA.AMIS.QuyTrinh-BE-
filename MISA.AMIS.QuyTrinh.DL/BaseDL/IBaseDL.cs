@@ -34,5 +34,11 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
         /// Created by: TienDao (27/12/2022)
         public int DeleteRecordByID(Guid recordID);
 
+
+        /// <summary>
+        /// Mở kết nối DB
+        /// </summary>
+        public void OpenDB();
+
     }
 }

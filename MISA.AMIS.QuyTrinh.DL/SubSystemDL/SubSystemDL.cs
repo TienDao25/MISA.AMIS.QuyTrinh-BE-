@@ -47,7 +47,6 @@ namespace MISA.AMIS.QuyTrinh.DL.SubSystemDL
 
                 return subSystems;
             }
-            throw new NotImplementedException();
         }
     }
 }

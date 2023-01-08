@@ -43,8 +43,6 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
         public Role GetRoleDetailByID(Guid RoleID)
         {
             return _roleDL.GetRoleDetailByID(RoleID);
-
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -55,12 +53,12 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
         /// <param name="offset">Vị trí của bản ghi bắt đầu lấy</param>
         /// <param name="fieldSort">Trường sắp xếp</param>
         /// <param name="typeSort">Kiểu sắp xếp</param>
+        /// <param name="roleStatus">Trạng thái muốn lọc</param>
         /// <returns>Danh sách vai trò và tổng số bản ghi</returns>
         /// Created by: TienDao (26/12/2022)
-        public PagingResult<Role> GetRolesByFilterAndPaging(string keyWord, int limit, int offset, string fieldSort, string typeSort)
+        public PagingResult<Role> GetRolesByFilterAndPaging(string keyWord, int limit, int offset, string fieldSort, string typeSort, RoleStatus roleStatus)
         {
-            return _roleDL.GetRolesByFilterAndPaging(keyWord, limit, offset, fieldSort, typeSort);
-            throw new NotImplementedException();
+            return _roleDL.GetRolesByFilterAndPaging(keyWord, limit, offset, fieldSort, typeSort, roleStatus);
         }
 
         /// <summary>
@@ -77,7 +75,6 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
                 return false;
             }
             return true;
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -86,13 +83,13 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
         /// <param name="role">Vai trò</param>
         /// <param name="validateFailures">Mảng lỗi</param>
         /// Created by: TienDao (31/12/2022)
-        private static void CheckRequired(Role role, List<string> validateFailures)
+        private static void CheckRequired(RequestClient requestClient, List<string> validateFailures)
         {
-            var properties = typeof(Role).GetProperties();
+            var properties = typeof(RequestClient).GetProperties();
 
             foreach (var property in properties)
             {
-                var propertyValue = property.GetValue(role);
+                var propertyValue = property.GetValue(requestClient);
                 var requiredAttribute = (RequiredAttribute?)Attribute.GetCustomAttribute(property, typeof(RequiredAttribute));
                 if (requiredAttribute != null && string.IsNullOrEmpty(propertyValue?.ToString()))
                 {
@@ -101,40 +98,44 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
             }
         }
 
-        public ResponseService InsertUpdateDulicateRole(ModeForm modeForm, Role role, List<Guid> listSubSystemID, List<Guid> listPermissionID)
+        /// <summary>
+        /// Thêm vai trò
+        /// </summary>
+        /// <param name="requestClient">Request client gửi về</param>
+        /// <returns></returns>
+        /// CreatedBy: TienDao (05/01/2023)
+        public ResponseService InsertRole(RequestClient requestClient)
         {
             var validateFailures = new List<string>();
 
-            int numberOfRowsAffected = 0;
+            // Kiểm tra bắt buộc
+            CheckRequired(requestClient, validateFailures);
 
-            CheckRequired(role, validateFailures);
+            // Kiểm tra trùng tên
 
-            if (modeForm == ModeForm.Add || modeForm == ModeForm.Dulicate)
+            if (IsDulicateRoleName(requestClient.RoleName, null) == true)
             {
-                if (IsDulicateRoleName(role.RoleName, null) == true)
-                {
-                    validateFailures.Add(Resource.Error_DulicateRoleName);
-                }
-
-                if (validateFailures.Count > 0)
-                {
-                    return new ResponseService
-                    {
-                        IsSuccess = false,
-                        Data = validateFailures,
-                    };
-                }
-
-                numberOfRowsAffected = _roleDL.InsertRole(role, listSubSystemID, listPermissionID);
-
-            }
-            if (modeForm == ModeForm.Update)
-            {
-
+                validateFailures.Add(Resource.Error_DulicateRoleName);
             }
 
-            //if (numberOfRowsAffected == listPermissionID.Count + 1)
-            if (numberOfRowsAffected > 0)
+            //Trả về controller nếu có lỗi
+            if (validateFailures.Count > 0)
+            {
+                return new ResponseService
+                {
+                    IsSuccess = false,
+                    Data = validateFailures,
+                };
+            }
+
+            List<SubSystemAndPermission> permissionsAdd = new List<SubSystemAndPermission>();
+            List<SubSystemAndPermission> permissionsDelete = new List<SubSystemAndPermission>();
+
+            HandlerPermissions(requestClient.Permissions, permissionsAdd, permissionsDelete);
+
+            int numberOfRowsAffected = _roleDL.InsertRole(requestClient, permissionsAdd, permissionsDelete);
+
+            if (numberOfRowsAffected == permissionsAdd.Count + permissionsDelete.Count + 1)
             {
                 return new ResponseService
                 {
@@ -148,8 +149,81 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
                     IsSuccess = false
                 };
             }
+        }
 
-            throw new NotImplementedException();
+        /// <summary>
+        /// Sửa vai trò
+        /// </summary>
+        /// <param name="requestClient">Request client gửi về</param>
+        /// <returns></returns>
+        /// CreatedBy: TienDao (05/01/2023)
+        public ResponseService UpdateRole(RequestClient requestClient)
+        {
+            var validateFailures = new List<string>();
+
+            // Kiểm tra bắt buộc
+            CheckRequired(requestClient, validateFailures);
+
+            //Check trùng tên
+            if (IsDulicateRoleName(requestClient.RoleName, requestClient.RoleID) == true)
+            {
+                validateFailures.Add(Resource.Error_DulicateRoleName);
+            }
+
+            //Trả về controller nếu có lỗi
+            if (validateFailures.Count > 0)
+            {
+                return new ResponseService
+                {
+                    IsSuccess = false,
+                    Data = validateFailures,
+                };
+            }
+
+            List<SubSystemAndPermission> permissionsAdd = new List<SubSystemAndPermission>();
+            List<SubSystemAndPermission> permissionsDelete = new List<SubSystemAndPermission>();
+
+            HandlerPermissions(requestClient.Permissions, permissionsAdd, permissionsDelete);
+
+            int numberOfRowsAffected = _roleDL.UpdateRole(requestClient, permissionsAdd, permissionsDelete);
+
+            if (numberOfRowsAffected == permissionsAdd.Count + permissionsDelete.Count + 1)
+            {
+                return new ResponseService
+                {
+                    IsSuccess = true
+                };
+            }
+            else
+            {
+                return new ResponseService
+                {
+                    IsSuccess = false
+                };
+            }
+        }
+
+        /// <summary>
+        /// Xử lý/Tách danh sách quyền client gửi về
+        /// </summary>
+        /// <param name="permissions">Danh sách quyền</param>
+        /// <param name="permissionsAdd">Các quyền thêm</param>
+        /// <param name="permissionsDelete">Các quyền xóa</param>
+        /// CreatedBy: TienDao (05/01/2023)
+        private void HandlerPermissions(List<SubSystemAndPermission> permissions, List<SubSystemAndPermission> permissionsAdd, List<SubSystemAndPermission> permissionsDelete)
+        {
+            permissions.ForEach(permission =>
+            {
+                if (permission.State == State.Add)
+                {
+                    permissionsAdd.Add(permission);
+                }
+
+                if (permission.State == State.Detele)
+                {
+                    permissionsDelete.Add(permission);
+                }
+            });
         }
     }
 }

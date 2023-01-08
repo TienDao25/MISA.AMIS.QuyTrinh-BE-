@@ -44,8 +44,18 @@ namespace MISA.AMIS.QuyTrinh.Common.Const
         public static string GET_COUNT_ROLE_BY_NAME = "Proc_role_CountRoleByName";
 
         /// <summary>
+        /// Procrdure thêm mới/Sửa vai trò
+        /// </summary>
+        public static string INSERT_UPDATE_ROLE = "Proc_role_InsertUpdate";
+
+        /// <summary>
         /// Procrdure thêm mới vai trò
         /// </summary>
         public static string INSERT_ROLE = "Proc_role_Insert";
+
+        /// <summary>
+        /// Procrdure Sửa vai trò
+        /// </summary>
+        public static string UPDATE_ROLE = "Proc_role_Update";
     }
 }

@@ -30,8 +30,6 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
                 records = (List<T>)mySqlConnection.Query<T>(sql: storedProcedureName, commandType: System.Data.CommandType.StoredProcedure);
             }
             return records;
-
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -56,7 +54,6 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
                 return record;
 
             }
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -97,6 +94,10 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
                 }
             }
             return numberOfRowsAffected;
+        }
+
+        public void OpenDB()
+        {
             throw new NotImplementedException();
         }
     }

@@ -34,7 +34,6 @@ namespace MISA.AMIS.QuyTrinh.BL.SubSystemBL
         public List<SubSystem> GetListSubSystem()
         {
             return _subSystemDL.GetListSubSystem();
-            throw new NotImplementedException();
         }
     }
 }

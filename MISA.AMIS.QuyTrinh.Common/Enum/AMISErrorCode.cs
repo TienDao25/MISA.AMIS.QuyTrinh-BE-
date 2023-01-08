@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace MISA.AMIS.QuyTrinh.Common.Enum
 {
+    /// <summary>
+    /// Mã lỗ
+    /// </summary>
     public enum AMISErrorCode
     {
         /// <summary>

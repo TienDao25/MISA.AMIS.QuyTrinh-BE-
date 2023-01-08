@@ -109,48 +109,6 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
             }
         }
 
-        ///// <summary>
-        ///// API lấy thông tin 1 bản ghi theo id
-        ///// </summary>
-        ///// <returns>Thông tin bản ghi có id phù hợp</returns>
-        ///// CreatedBy: TienDao(22/12/2022)
-        //[HttpGet("{recordID}")]
-        //public IActionResult GetRecordByID([FromRoute] Guid recordID)
-        //{
-        //    try
-        //    {
-        //        var record = _baseBL.GetRecordByID(recordID);
-        //        //Xử lý kết quả trả về
-        //        if (record != null)
-        //        {
-        //            return StatusCode(StatusCodes.Status200OK, record);
-        //        }
-        //        return StatusCode(StatusCodes.Status404NotFound, new ErrorResult
-        //        {
-        //            ErrorCode = AMISErrorCode.GetDetail,
-        //            DevMsg = Resource.DevMsg_GetDetail,
-        //            UserMsg = Resource.UserMsg_GetDetail,
-        //            MoreInfo = Resource.MoreInfo_GetDetail,
-        //            TraceId = HttpContext.TraceIdentifier
-        //        });
-
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e.Message);
-        //        return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResult
-        //        {
-        //            ErrorCode = AMISErrorCode.Exception,
-        //            DevMsg = Resource.DevMsg_Exception,
-        //            UserMsg = Resource.UserMsg_Exception,
-        //            MoreInfo = Resource.MoreInfo_Exception,
-        //            TraceId = HttpContext.TraceIdentifier
-        //        });
-        //    }
-
-        //    //Try catch exception
-        //}
-
         #endregion
     }
 }

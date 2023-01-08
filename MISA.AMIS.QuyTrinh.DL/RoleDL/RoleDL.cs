@@ -8,6 +8,7 @@ using MySqlConnector;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,9 +25,10 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
         /// <param name="offset">Vị trí của bản ghi bắt đầu lấy</param>
         /// <param name="fieldSort">Trường sắp xếp</param>
         /// <param name="typeSort">Kiểu sắp xếp</param>
+        /// <param name="roleStatus">Trạng thái muốn lọc</param>
         /// <returns>Danh sách vai trò và tổng số bản ghi</returns>
         /// Created by: TienDao (26/12/2022)
-        public PagingResult<Role> GetRolesByFilterAndPaging(string keyword, int limit, int offset, string fieldSort, string typeSort)
+        public PagingResult<Role> GetRolesByFilterAndPaging(string keyword, int limit, int offset, string fieldSort, string typeSort, RoleStatus roleStatus)
         {
             //Chuẩn bị câu lệnh SQL
             string storedProcedureName = Procedure.GET_ROLES_BY_FILTER_PAGING;
@@ -38,6 +40,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
             parameters.Add("@Offset", offset);
             parameters.Add("@FieldSort", fieldSort);
             parameters.Add("@TypeSort", typeSort);
+            parameters.Add("@roleStatus", roleStatus);
 
             //Khởi tạo kết nối tới DB MySQL
             using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
@@ -65,7 +68,6 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                 };
 
             }
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -95,7 +97,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                     {
                         RoleID = result2.RoleID,
                         RoleName = result2.RoleName,
-                        RoleDescribe = result2.RoleDescribe,
+                        RoleDescription = result2.RoleDescribe,
                         RoleStatus = (RoleStatus)result2.RoleStatus,
                     };
                     return role;
@@ -107,7 +109,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                     {
                         RoleID = g.Key.RoleID,
                         RoleName = g.Key.RoleName,
-                        RoleDescribe = g.Key.RoleDescribe,
+                        RoleDescription = g.Key.RoleDescribe,
                         RoleStatus = (RoleStatus)g.Key.RoleStatus,
                         ListSubsytemAndPermission = g.GroupBy(x => (x.SubSystemID, x.SubSystemCode, x.SubSystemName, x.SubSystemType))
                             .Select(g => new SubSystem
@@ -129,7 +131,6 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                 }
 
             }
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -157,33 +158,64 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                 return numberRecords;
 
             }
-            throw new NotImplementedException();
         }
 
         /// <summary>
-        /// Thêm mới vai trò
+        /// DL Thêm vai trò
         /// </summary>
-        /// <param name="role">Thông tin tổng quan vai trò</param>
-        /// <param name="listSubSystemID">Danh sách id phân quyền</param>
-        /// <param name="listPremissionID">Danh sách id quyền tương ứng với phân quyền</param>
-        /// <returns>Số bản ghi</returns>
-        /// Created by: TienDao (31/12/2022)
-        public int InsertRole(Role role, List<Guid> listSubSystemID, List<Guid> listPermissionID)
+        /// <param name="requestClient">request client (dùng để lấy cá thông tin cố định (tên, mô tả))</param>
+        /// <param name="permissionsAdd">Danh sách quyền thêm</param>
+        /// <param name="permissionsDelete">Danh sách quyền xóa</param>
+        /// <returns></returns>
+        /// CreatedBy: TienDao (05/01/2023)
+        public int InsertRole(RequestClient requestClient, List<SubSystemAndPermission> permissionsAdd, List<SubSystemAndPermission> permissionsDelete)
         {
             //Chuẩn bị câu lệnh SQL
             string storedProcedureName = Procedure.INSERT_ROLE;
 
             //Chuẩn bị tham số đầu vào
             Guid roleID = Guid.NewGuid();
+
+            string roleName = requestClient.RoleName;
+            string roleCode = requestClient.RoleCode;
+            string roleDescription = requestClient.RoleDescription;
+            string presentTime = "NOW()";
+            //string user = requestClient.User;
+            string user = "Tiến Đạo";
+
+            string listSubPerAdd = "";
+            string listSubPerDelete = "";
+            int index = 0;
+            permissionsAdd.ForEach((permission) =>
+            {
+                listSubPerAdd += "('" + roleID + "','" + permission.SubSystemID + "','"
+                    + permission.PermissionID + "'," + presentTime + ",'" + user + "')";
+                if (index < permissionsAdd.Count - 1)
+                {
+                    listSubPerAdd += ",";
+                }
+                index++;
+            });
+            index = 0;
+            permissionsDelete.ForEach((permission) =>
+            {
+                listSubPerDelete += "('" + permission.SubSystemID + "','" + permission.PermissionID + "')";
+                if (index < permissionsDelete.Count - 1)
+                {
+                    listSubPerDelete += ",";
+                }
+                index++;
+            });
+
             var parameters = new DynamicParameters();
             parameters.Add("@RoleID", roleID);
-            parameters.Add("@RoleID", roleID);
-            parameters.Add("@RoleName", role.RoleName);
-            parameters.Add("@RoleDescribe", role.RoleDescribe);
-            parameters.Add("@ListSubSystemID", string.Join(",", listSubSystemID));
-            parameters.Add("@ListPermissionID", string.Join(",", listPermissionID));
+            parameters.Add("@RoleName", roleName);
+            parameters.Add("@RoleDescription", roleDescription);
             parameters.Add("@CreatedDate", DateTime.Now);
-            parameters.Add("@CreatedBy", "Tiến Đạo");
+            parameters.Add("@CreatedBy", user);
+
+            parameters.Add("@ListSubPerAdd", listSubPerAdd);
+            parameters.Add("@ListSubPerDelete", listSubPerDelete);
 
             int numberOfRowsAffected = 0;
             //Khởi tạo kết nối tới DB MySQL
@@ -194,9 +226,10 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                 {
                     try
                     {
-                        numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
+                        //numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
+                        numberOfRowsAffected = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
 
-                        if (numberOfRowsAffected > 0)
+                        if (numberOfRowsAffected == permissionsDelete.Count + permissionsAdd.Count + 1)
                         {
                             transaction.Commit();
                         }
@@ -206,25 +239,103 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                         }
 
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.WriteLine(ex.Message);
                         transaction.Rollback();
-
                     }
-                    //numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
-
-                    //if (numberOfRowsAffected == listSubSystemID.Count + 1)
-                    //{
-                    //    transaction.Commit();
-                    //}
-                    //else
-                    //{
-                    //    transaction.Rollback();
-                    //}
                 }
             }
             return numberOfRowsAffected;
-            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// DL Sửa vai trò
+        /// </summary>
+        /// <param name="requestClient">request client (dùng để lấy cá thông tin cố định (tên, mô tả))</param>
+        /// <param name="permissionsAdd">Danh sách quyền thêm</param>
+        /// <param name="permissionsDelete">Danh sách quyền xóa</param>
+        /// <returns></returns>
+        /// CreatedBy: TienDao (05/01/2023)
+        public int UpdateRole(RequestClient requestClient, List<SubSystemAndPermission> permissionsAdd, List<SubSystemAndPermission> permissionsDelete)
+        {
+            //Chuẩn bị câu lệnh SQL
+            string storedProcedureName = Procedure.UPDATE_ROLE;
+
+            //Chuẩn bị tham số đầu vào
+            Guid roleID = (Guid)requestClient.RoleID;
+
+            string roleName = requestClient.RoleName;
+            string roleCode = requestClient.RoleCode;
+            string roleDescription = requestClient.RoleDescription;
+            string presentTime = "NOW()";
+            //string user = requestClient.User;
+            string user = "Tiến Đạo";
+
+            string listSubPerAdd = "";
+            string listSubPerDelete = "";
+            int index = 0;
+            permissionsAdd.ForEach((permission) =>
+            {
+                listSubPerAdd += "('" + roleID + "','" + permission.SubSystemID + "','"
+                    + permission.PermissionID + "'," + presentTime + ",'" + user + "')";
+                if (index < permissionsAdd.Count - 1)
+                {
+                    listSubPerAdd += ",";
+                }
+                index++;
+            });
+            index = 0;
+            permissionsDelete.ForEach((permission) =>
+            {
+                listSubPerDelete += "('" + permission.SubSystemID + "','" + permission.PermissionID + "')";
+                if (index < permissionsDelete.Count - 1)
+                {
+                    listSubPerDelete += ",";
+                }
+                index++;
+            });
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@RoleID", roleID);
+            parameters.Add("@RoleName", roleName);
+            parameters.Add("@RoleDescription", roleDescription);
+            parameters.Add("@ModifiedDate", DateTime.Now);
+            parameters.Add("@ModifiedBy", user);
+
+            parameters.Add("@ListSubPerAdd", listSubPerAdd);
+            parameters.Add("@ListSubPerDelete", listSubPerDelete);
+
+            int numberOfRowsAffected = 0;
+            //Khởi tạo kết nối tới DB MySQL
+            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            {
+                mySqlConnection.Open();
+                using (var transaction = mySqlConnection.BeginTransaction())
+                {
+                    try
+                    {
+                        //numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
+                        numberOfRowsAffected = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
+
+                        if (numberOfRowsAffected == permissionsDelete.Count + permissionsAdd.Count + 1)
+                        {
+                            transaction.Commit();
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        transaction.Rollback();
+                    }
+                }
+            }
+            return numberOfRowsAffected;
         }
     }
 }

@@ -104,6 +104,7 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
         /// <param name="offset">Vị trí của bản ghi bắt đầu lấy</param>
         /// <param name="fieldSort">Trường sắp xếp</param>
         /// <param name="typeSort">Kiểu sắp xếp</param>
+        /// <param name="roleStatus">Trạng thái muốn lọc</param>
         /// <returns>Danh sách vai trò và tổng số bản ghi</returns>
         /// Created by: TienDao (26/12/2022)
         [HttpGet("filter")]
@@ -112,11 +113,12 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
             [FromQuery] int limit = 10,
             [FromQuery] int offset = 0,
             [FromQuery] string? fieldSort = "",
-            [FromQuery] string? typeSort = null)
+            [FromQuery] string? typeSort = null,
+            [FromQuery] int? roleStatus = -1)
         {
             try
             {
-                var result = _roleBL.GetRolesByFilterAndPaging(keyword, limit, offset, fieldSort, typeSort);
+                var result = _roleBL.GetRolesByFilterAndPaging(keyword, limit, offset, fieldSort, typeSort, (RoleStatus)roleStatus);
                 //Xử lý kết quả trả về
 
                 return StatusCode(StatusCodes.Status200OK, result);
@@ -137,20 +139,20 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
         }
 
         /// <summary>
-        /// API thêm mới vai trò
+        /// Thêm mới vai trò
         /// </summary>
-        /// <param name="role">Thông tin vai trò</param>
-        /// <param name="listSubSystemID">Danh sách ID phân quyền</param>
-        /// <param name="listPermissionID">Danh sách ID quyền tương ứng với phân quyền</param>
+        /// <param name="requestClient">Request client gửi về</param>
         /// <returns></returns>
-        /// CreatedBy: TienDao (31/12/2022)
+        /// CreatedBy: TienDao (05/01/2023)
         [HttpPost]
         public IActionResult InsertRole([FromBody] RequestClient requestClient)
         {
             try
             {
                 // thực hiện thêm mới dữ liệu
-                var result = _roleBL.InsertUpdateDulicateRole(requestClient.ModeForm, requestClient.Role, requestClient.ListSubSystemID, requestClient.ListPermissionID);
+                var result = _roleBL.InsertRole(requestClient);
+
+                //Thành công
                 if (result.IsSuccess == true)
                 {
                     return StatusCode(StatusCodes.Status201Created);
@@ -182,65 +184,53 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
             }
         }
 
-        ///// <summary>
-        ///// API sửa thông tin nhân viên theo ID
-        ///// </summary>
-        ///// <param name="employeeID">ID nhân viên muốn sửa</param>
-        ///// <param name="employee">Đối tượng nhân viên muốn sửa</param>
-        ///// <returns>ID của nhân viên vừa sửa</returns>
-        ///// CreatedBy: TienDao(04/12/2022)
-        //[HttpPut("{employeeID}")]
-        //public IActionResult UpdateEmployee(
-        //    [FromRoute] Guid employeeID,
-        //    [FromBody] Employee employee)
-        //{
-        //    try
-        //    {
+        /// <summary>
+        /// Cập nhật vai trò
+        /// </summary>
+        /// <param name="requestClient">Request client gửi về</param>
+        /// <returns></returns>
+        /// CreatedBy: TienDao (05/01/2023)
+        [HttpPut]
+        public IActionResult UpdateRole([FromBody] RequestClient requestClient)
+        {
+            try
+            {
+                // thực hiện thêm mới dữ liệu
+                var result = _roleBL.UpdateRole(requestClient);
 
-        //        // thực hiện update dữ liệu
-        //        var result = _employeeBL.UpdateEmployee(employeeID, employee);
-        //        //Xử lý kết quả trả về
-        //        if (result.IsSuccess == true)
-        //        {
-        //            if (result.NumberOfRowsAffected == 1)
-        //            {
-        //                return StatusCode(StatusCodes.Status200OK);
-        //            }
-        //            return StatusCode(StatusCodes.Status404NotFound, new
-        //            {
-        //                ErrorCode = AMISErrorCode.UpdateError,
-        //                DevMsg = Resource.DevMsg_UpdateError,
-        //                UserMsg = Resource.UserMsg_UpdateError,
-        //                MoreInfo = Resource.MoreInfo,
-        //                TraceId = HttpContext.TraceIdentifier
-        //            });
-        //        }
-        //        else
-        //        {
-        //            return StatusCode(StatusCodes.Status400BadRequest, new ErrorResult
-        //            {
-        //                ErrorCode = AMISErrorCode.UpdateError,
-        //                DevMsg = Resource.DevMsg_UpdateError,
-        //                UserMsg = Resource.UserMsg_UpdateError,
-        //                MoreInfo = result.Data,
-        //                TraceId = HttpContext.TraceIdentifier
-        //            });
-        //        }
-        //        //Thất bại: trả về lỗi
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e.Message);
-        //        return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResult
-        //        {
-        //            ErrorCode = AMISErrorCode.Exception,
-        //            DevMsg = Resource.DevMsg_Exception,
-        //            UserMsg = Resource.UserMsg_Exception,
-        //            MoreInfo = Resource.MoreInfo_Exception,
-        //            TraceId = HttpContext.TraceIdentifier
-        //        });
-        //    }
-        //}
+                //Thành công
+                if (result.IsSuccess == true)
+                {
+                    return StatusCode(StatusCodes.Status200OK);
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status400BadRequest, new ErrorResult
+                    {
+                        ErrorCode = AMISErrorCode.InsertError,
+                        DevMsg = Resource.DevMsg_InsertError,
+                        UserMsg = Resource.UserMsg_InsertError,
+                        MoreInfo = result.Data,
+                        TraceId = HttpContext.TraceIdentifier
+                    });
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResult
+                {
+                    ErrorCode = AMISErrorCode.Exception,
+                    DevMsg = Resource.DevMsg_Exception,
+                    UserMsg = Resource.UserMsg_Exception,
+                    MoreInfo = Resource.MoreInfo_Exception,
+                    TraceId = HttpContext.TraceIdentifier
+                });
+            }
+        }
+
+
         #endregion
     }
 }

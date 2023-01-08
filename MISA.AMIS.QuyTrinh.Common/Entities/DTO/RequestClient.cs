@@ -1,6 +1,7 @@
 ﻿using MISA.AMIS.QuyTrinh.Common.Enum;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,18 +19,29 @@ namespace MISA.AMIS.QuyTrinh.Common.Entities.DTO
         public ModeForm ModeForm { get; set; }
 
         /// <summary>
-        /// Thông tin tổng quát vai trò
+        /// ID vai trò
         /// </summary>
-        public Role Role { get; set; }
+        public Guid? RoleID { get; set; }
 
         /// <summary>
-        /// Danh sách ID phân quyền
+        /// Mã vai trò
         /// </summary>
-        public List<Guid> ListSubSystemID { get; set; }
+        public string? RoleCode { get; set; }
 
         /// <summary>
-        /// Danh sách ID quyền tương ứng
+        /// Tên vai trò
+        /// </summary> 
+        [Required(ErrorMessage = "Tên vai trò không được để trống")]
+        public string RoleName { get; set; }
+
+        /// <summary>
+        /// Mô tả vai trò
         /// </summary>
-        public List<Guid> ListPermissionID { get; set; }
+        public string? RoleDescription { get; set; }
+
+        /// <summary>
+        /// Danh sách quyền 
+        /// </summary>
+        public List<SubSystemAndPermission>? Permissions { get; set; }
     }
 }

@@ -36,7 +36,6 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         public IEnumerable<T> GetAllRecords()
         {
             return _baseDL.GetAllRecords();
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -48,7 +47,6 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         public T GetRecordByID(Guid recordID)
         {
             return _baseDL.GetRecordByID(recordID);
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -67,7 +65,6 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
             {
                 return new ResponseService { IsSuccess = false };
             }
-            throw new NotImplementedException();
         }
         #endregion
     }

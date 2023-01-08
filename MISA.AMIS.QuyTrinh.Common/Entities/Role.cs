@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace MISA.AMIS.QuyTrinh.Common.Entities
 {
+    /// <summary>
+    /// Vai trò tổng quát
+    /// </summary>
     public class Role : BaseEntity
     {
         #region Propety
@@ -31,7 +34,7 @@ namespace MISA.AMIS.QuyTrinh.Common.Entities
         /// <summary>
         /// Mô tả vai trò
         /// </summary>
-        public string RoleDescribe { get; set; }
+        public string RoleDescription { get; set; }
 
         /// <summary>
         /// Trạng thái vai trò

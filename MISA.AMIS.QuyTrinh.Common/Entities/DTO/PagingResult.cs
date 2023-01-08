@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace MISA.AMIS.QuyTrinh.Common.Entities.DTO
 {
+    /// <summary>
+    /// Kết quả gọi phân trang/tìm kiếm
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class PagingResult<T>
     {
         /// <summary>
