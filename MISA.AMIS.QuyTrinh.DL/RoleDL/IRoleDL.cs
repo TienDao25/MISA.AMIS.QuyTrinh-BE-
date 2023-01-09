@@ -31,15 +31,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
         /// <param name="roleStatus">Trạng thái muốn lọc</param>
         /// <returns>Danh sách vai trò và tổng số bản ghi</returns>
         /// Created by: TienDao (26/12/2022)
-        public PagingResult<Role> GetRolesByFilterAndPaging(string keyWord, int limit, int offset, string fieldSort, string typeSort, RoleStatus roleStatus);
-
-        /// <summary>
-        /// Đếm số bản ghi vai trò theo tên
-        /// </summary>
-        /// <param name="roleName">Tên vai trò</param>
-        /// <returns>Số bản ghi</returns>
-        /// Created by: TienDao (31/12/2022)
-        public int CountRoleByName (string roleName, Guid? roleID);
+        public PagingResult<Role> GetRolesByFilterAndPaging(string keyWord, int limit, int offset, string fieldSort, TypeSort typeSort, RoleStatus roleStatus);
 
         /// <summary>
         /// DL Thêm vai trò

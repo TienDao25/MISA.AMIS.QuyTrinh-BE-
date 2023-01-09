@@ -33,30 +33,6 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
         }
 
         /// <summary>
-        /// Lấy thông tin 1 bản ghi theo ID
-        /// </summary>
-        /// <param name="recordID">ID của bản ghi muốn lấy</param>
-        /// <returns>Thông tin của 1 bản ghi</returns>
-        /// Created by: TienDao(22/12/2022)
-        public T GetRecordByID(Guid recordID)
-        {
-            // Chuẩn bị câu lệnh SQL
-            string storedProcedureName = String.Format(Procedure.GET_BY_ID, typeof(T).Name);
-
-            //Chuẩn bị tham số đầu vào
-            var parameters = new DynamicParameters();
-            parameters.Add($"@{typeof(T).Name}ID", recordID);
-            // chuwa surwa
-            //Thực hiện gọi vào DB
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
-            {
-                var record = mySqlConnection.QueryFirstOrDefault<T>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
-                return record;
-
-            }
-        }
-
-        /// <summary>
         /// Xóa/Hủy bản ghi theo ID
         /// </summary>
         /// <param name="recordID">ID bản muốn xóa</param>
@@ -96,9 +72,34 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
             return numberOfRowsAffected;
         }
 
-        public void OpenDB()
+        /// <summary>
+        /// Kiểm tra trùng
+        /// </summary>
+        /// <param name="fieldName">Tên trường</param>
+        /// <param name="valueNeedCheck">Giá trị check</param>
+        /// <param name="recordID">ID bản ghi</param>
+        /// <returns>True: trùng, False: không trùng</</returns>
+        public bool CheckDulicate(string fieldName, string valueNeedCheck, Guid? recordID)
         {
-            throw new NotImplementedException();
+            //Chuẩn bị câu lệnh SQL
+            string storedProcedureName = String.Format(Procedure.CHECK_DULICATE, typeof(T).Name, fieldName);
+
+            //Chuẩn bị tham số đầu vào
+            var parameters = new DynamicParameters();
+            parameters.Add($"@{fieldName}", valueNeedCheck);
+            parameters.Add($"@{typeof(T).Name}ID", recordID);
+
+
+            // Khởi tạo kết nối tới DB MySQL
+            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            {
+                int numberRecords = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
+                if (numberRecords == 0)
+                {
+                    return false;
+                }
+                return true;
+            }
         }
     }
 }

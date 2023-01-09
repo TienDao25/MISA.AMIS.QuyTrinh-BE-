@@ -56,25 +56,9 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
         /// <param name="roleStatus">Trạng thái muốn lọc</param>
         /// <returns>Danh sách vai trò và tổng số bản ghi</returns>
         /// Created by: TienDao (26/12/2022)
-        public PagingResult<Role> GetRolesByFilterAndPaging(string keyWord, int limit, int offset, string fieldSort, string typeSort, RoleStatus roleStatus)
+        public PagingResult<Role> GetRolesByFilterAndPaging(string keyWord, int limit, int offset, string fieldSort, TypeSort typeSort, RoleStatus roleStatus)
         {
             return _roleDL.GetRolesByFilterAndPaging(keyWord, limit, offset, fieldSort, typeSort, roleStatus);
-        }
-
-        /// <summary>
-        /// Kiểm tra tên vai trò trùng
-        /// </summary>
-        /// <param name="roleName">Tên vai trò</param>
-        /// <returns>True: trùng, False: không trùng</returns>
-        /// Created by: TienDao(31/12/2022)
-        public bool IsDulicateRoleName(string roleName, Guid? roleID)
-        {
-            int countRole = _roleDL.CountRoleByName(roleName, roleID);
-            if (countRole == 0)
-            {
-                return false;
-            }
-            return true;
         }
 
         /// <summary>
@@ -112,8 +96,7 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
             CheckRequired(requestClient, validateFailures);
 
             // Kiểm tra trùng tên
-
-            if (IsDulicateRoleName(requestClient.RoleName, null) == true)
+            if (CheckDulicate("RoleName", requestClient.RoleName, null) == true)
             {
                 validateFailures.Add(Resource.Error_DulicateRoleName);
             }
@@ -165,7 +148,7 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
             CheckRequired(requestClient, validateFailures);
 
             //Check trùng tên
-            if (IsDulicateRoleName(requestClient.RoleName, requestClient.RoleID) == true)
+            if (CheckDulicate("RoleName", requestClient.RoleName, requestClient.RoleID) == true)
             {
                 validateFailures.Add(Resource.Error_DulicateRoleName);
             }

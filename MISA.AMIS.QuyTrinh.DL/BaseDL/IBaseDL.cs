@@ -19,14 +19,6 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
         public IEnumerable<T> GetAllRecords();
 
         /// <summary>
-        /// Lấy thông tin 1 bản ghi theo ID
-        /// </summary>
-        /// <param name="recordID">ID của bản ghi muốn lấy</param>
-        /// <returns>Thông tin của 1 bản ghi</returns>
-        /// Created by: TienDao(22/12/2022)
-        public T GetRecordByID(Guid recordID);
-
-        /// <summary>
         /// Xóa/Hủy bản ghi theo ID
         /// </summary>
         /// <param name="recordID">ID bản muốn xóa</param>
@@ -34,11 +26,13 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
         /// Created by: TienDao (27/12/2022)
         public int DeleteRecordByID(Guid recordID);
 
-
         /// <summary>
-        /// Mở kết nối DB
+        /// Kiểm tra trùng
         /// </summary>
-        public void OpenDB();
-
+        /// <param name="fieldName">Tên trường</param>
+        /// <param name="valueNeedCheck">Giá trị check</param>
+        /// <param name="recordID">ID bản ghi</param>
+        /// <returns>True: trùng, False: không trùng</</returns>
+        public bool CheckDulicate(string fieldName, string valueNeedCheck, Guid? recordID);
     }
 }

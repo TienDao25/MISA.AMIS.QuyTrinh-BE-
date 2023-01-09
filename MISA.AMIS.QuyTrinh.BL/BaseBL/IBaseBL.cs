@@ -17,18 +17,19 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         public IEnumerable<T> GetAllRecords();
 
         /// <summary>
-        /// Lấy thông tin 1 bản ghi theo ID
-        /// </summary>
-        /// <param name="recordID">ID của bản ghi muốn lấy</param>
-        /// <returns>Thông tin của 1 bản ghi</returns>
-        /// Created by: TienDao(22/12/2022)
-        public T GetRecordByID(Guid recordID);
-
-        /// <summary>
         /// Xóa/Hủy bản ghi theo ID
         /// </summary>
         /// <param name="recordID">ID bản muốn xóa</param>
         /// Created by: TienDao (27/12/2022)
         public ResponseService DeleteRecordByID(Guid recordID);
+
+        /// <summary>
+        /// Kiểm tra trùng
+        /// </summary>
+        /// <param name="fieldName">Tên trường</param>
+        /// <param name="valueNeedCheck">Giá trị check</param>
+        /// <param name="recordID">ID bản ghi</param>
+        /// <returns>True: trùng, False: không trùng</</returns>
+        public bool CheckDulicate(string fieldName, string valueNeedCheck, Guid? recordID);
     }
 }

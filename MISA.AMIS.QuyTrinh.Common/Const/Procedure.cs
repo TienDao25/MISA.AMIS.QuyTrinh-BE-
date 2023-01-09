@@ -34,6 +34,11 @@ namespace MISA.AMIS.QuyTrinh.Common.Const
         public static string DELETE_RECORD_BY_ID = "Proc_{0}_DeleteByID";
 
         /// <summary>
+        /// Kiểm tra trùng
+        /// </summary>
+        public static string CHECK_DULICATE = "Proc_{0}_CheckDulicate_{1}";
+
+        /// <summary>
         /// Procedure lấy danh sách phân quyền
         /// </summary>
         public static string GET_LIST_PERMISSION = " Proc_permission_GetAllDetail";

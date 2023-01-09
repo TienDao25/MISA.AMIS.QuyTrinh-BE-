@@ -7,23 +7,23 @@ using System.Threading.Tasks;
 namespace MISA.AMIS.QuyTrinh.Common.Enum
 {
     /// <summary>
-    /// Trạng thái vai trò
+    /// Kiểu sắp xếp
     /// </summary>
-    public enum RoleStatus
+    public enum TypeSort
     {
         /// <summary>
-        /// Đang hoạt động hoặc Đã xóa
+        /// Không sắp xếp
         /// </summary>
-        All = -1,
+        None = -1,
 
         /// <summary>
-        /// Đang hoạt động
+        /// Tăng dần
         /// </summary>
-        Active = 0,
+        Ascending = 0,
 
         /// <summary>
-        /// Đã xóa
+        /// Giảm dần
         /// </summary>
-        Deleted = 1
+        Descending = 1,
     }
 }

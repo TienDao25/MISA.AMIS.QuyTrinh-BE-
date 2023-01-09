@@ -28,7 +28,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
         /// <param name="roleStatus">Trạng thái muốn lọc</param>
         /// <returns>Danh sách vai trò và tổng số bản ghi</returns>
         /// Created by: TienDao (26/12/2022)
-        public PagingResult<Role> GetRolesByFilterAndPaging(string keyword, int limit, int offset, string fieldSort, string typeSort, RoleStatus roleStatus)
+        public PagingResult<Role> GetRolesByFilterAndPaging(string keyword, int limit, int offset, string fieldSort, TypeSort typeSort, RoleStatus roleStatus)
         {
             //Chuẩn bị câu lệnh SQL
             string storedProcedureName = Procedure.GET_ROLES_BY_FILTER_PAGING;
@@ -134,33 +134,6 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
         }
 
         /// <summary>
-        /// Đếm số bản ghi vai trò theo tên
-        /// </summary>
-        /// <param name="roleName">Tên vai trò</param>
-        /// <returns>Số bản ghi</returns>
-        /// Created by: TienDao(31/12/2022)
-        public int CountRoleByName(string roleName, Guid? roleID)
-        {
-            //Chuẩn bị câu lệnh SQL
-            string storedProcedureName = Procedure.GET_COUNT_ROLE_BY_NAME;
-
-            //Chuẩn bị tham số đầu vào
-            var parameters = new DynamicParameters();
-            parameters.Add("@RoleName", roleName);
-            parameters.Add("@RoleID", roleID);
-
-            //Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
-            {
-                //Thực hiện gọi vào DB
-                int numberRecords = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
-
-                return numberRecords;
-
-            }
-        }
-
-        /// <summary>
         /// DL Thêm vai trò
         /// </summary>
         /// <param name="requestClient">request client (dùng để lấy cá thông tin cố định (tên, mô tả))</param>
@@ -227,7 +200,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                     try
                     {
                         //numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
-                        numberOfRowsAffected = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
+                        numberOfRowsAffected = mySqlConnection.QueryFirst<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
 
                         if (numberOfRowsAffected == permissionsDelete.Count + permissionsAdd.Count + 1)
                         {

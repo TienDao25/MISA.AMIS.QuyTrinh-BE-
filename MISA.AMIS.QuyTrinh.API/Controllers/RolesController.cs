@@ -28,35 +28,6 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
         #region Method
 
         /// <summary>
-        /// API test kiểm tra trùng tên vai trò
-        /// </summary>
-        /// <returns>true: trùng, false: không trùng</returns>
-        /// CreatedBy: TienDao(31/12/2022)
-        [HttpGet("CountRole")]
-        public IActionResult GetIsDulicateRoleName(string roleName, Guid roleID)
-        {
-            try
-            {
-                bool isDulicateRoleName = _roleBL.IsDulicateRoleName(roleName, roleID);
-
-                return StatusCode(StatusCodes.Status200OK, isDulicateRoleName);
-
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResult
-                {
-                    ErrorCode = AMISErrorCode.Exception,
-                    DevMsg = Resource.DevMsg_Exception,
-                    UserMsg = Resource.UserMsg_Exception,
-                    MoreInfo = Resource.MoreInfo_Exception,
-                    TraceId = HttpContext.TraceIdentifier
-                });
-            }
-        }
-
-        /// <summary>
         /// API lấy chi tiết bản ghi vai trò
         /// </summary>
         /// <returns>chi tiết 1 vài trò</returns>
@@ -113,8 +84,8 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
             [FromQuery] int limit = 10,
             [FromQuery] int offset = 0,
             [FromQuery] string? fieldSort = "",
-            [FromQuery] string? typeSort = null,
-            [FromQuery] int? roleStatus = -1)
+            [FromQuery] TypeSort typeSort = TypeSort.None,
+            [FromQuery] int? roleStatus = (int)RoleStatus.All)
         {
             try
             {
