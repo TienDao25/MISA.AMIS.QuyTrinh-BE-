@@ -17,6 +17,14 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         public IEnumerable<T> GetAllRecords();
 
         /// <summary>
+        /// Thêm mới bản ghi
+        /// </summary>
+        /// <param name="entity">Thông tin cần thêm</param>
+        /// <returns>ID bản ghi được thêm</returns>
+        /// Author: TienDao (11/01/2023)
+        public ResponseService Insert(List<T> entities);
+
+        /// <summary>
         /// Xóa/Hủy bản ghi theo ID
         /// </summary>
         /// <param name="recordID">ID bản muốn xóa</param>
@@ -31,5 +39,12 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         /// <param name="recordID">ID bản ghi</param>
         /// <returns>True: trùng, False: không trùng</</returns>
         public bool CheckDulicate(string fieldName, string valueNeedCheck, Guid? recordID);
+
+        /// <summary>
+        /// API lấy danh sách bản ghi theo bộ lọc và phân trang
+        /// </summary>
+        /// <returns>Danh sách bản ghi và tổng số bản ghi</returns>
+        /// Created by: TienDao (11/01/2023)
+        public PagingResult<T> GetRecordByFilterAndPaging(List<Filter>? filter, int limit, int offset, Sort sort);
     }
 }

@@ -28,9 +28,9 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
         #endregion
 
         /// <summary>
-        /// API lấy chi tiết bản ghi vai trò
+        /// API lấy danh sách phân quyền
         /// </summary>
-        /// <returns>chi tiết 1 vài trò</returns>
+        /// <returns>Danh sách phân quyền</returns>
         /// CreatedBy: TienDao(22/12/2022)
         [HttpGet]
         public IActionResult GetListSubSystem()

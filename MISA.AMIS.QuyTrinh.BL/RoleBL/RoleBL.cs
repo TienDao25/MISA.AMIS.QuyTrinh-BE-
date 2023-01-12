@@ -112,13 +112,13 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
             }
 
             List<SubSystemAndPermission> permissionsAdd = new List<SubSystemAndPermission>();
-            List<SubSystemAndPermission> permissionsDelete = new List<SubSystemAndPermission>();
 
-            HandlerPermissions(requestClient.Permissions, permissionsAdd, permissionsDelete);
+            //Tách danh sách mảng theo state
+            HandlerPermissions(requestClient.ModeForm, requestClient.Permissions, permissionsAdd, null);
 
-            int numberOfRowsAffected = _roleDL.InsertRole(requestClient, permissionsAdd, permissionsDelete);
+            int numberOfRowsAffected = _roleDL.InsertRole(requestClient, permissionsAdd);
 
-            if (numberOfRowsAffected == permissionsAdd.Count + permissionsDelete.Count + 1)
+            if (numberOfRowsAffected == permissionsAdd.Count + 1)
             {
                 return new ResponseService
                 {
@@ -166,7 +166,8 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
             List<SubSystemAndPermission> permissionsAdd = new List<SubSystemAndPermission>();
             List<SubSystemAndPermission> permissionsDelete = new List<SubSystemAndPermission>();
 
-            HandlerPermissions(requestClient.Permissions, permissionsAdd, permissionsDelete);
+            //Tách danh sách mảng
+            HandlerPermissions(requestClient.ModeForm, requestClient.Permissions, permissionsAdd, permissionsDelete);
 
             int numberOfRowsAffected = _roleDL.UpdateRole(requestClient, permissionsAdd, permissionsDelete);
 
@@ -193,20 +194,32 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
         /// <param name="permissionsAdd">Các quyền thêm</param>
         /// <param name="permissionsDelete">Các quyền xóa</param>
         /// CreatedBy: TienDao (05/01/2023)
-        private void HandlerPermissions(List<SubSystemAndPermission> permissions, List<SubSystemAndPermission> permissionsAdd, List<SubSystemAndPermission> permissionsDelete)
+        private void HandlerPermissions(ModeForm modeForm, List<SubSystemAndPermission> permissions, List<SubSystemAndPermission> permissionsAdd, List<SubSystemAndPermission>? permissionsDelete)
         {
-            permissions.ForEach(permission =>
+            if (modeForm == ModeForm.Add || modeForm == ModeForm.Dulicate)
             {
-                if (permission.State == State.Add)
+                permissions.ForEach(permission =>
                 {
                     permissionsAdd.Add(permission);
-                }
+                });
+            }
 
-                if (permission.State == State.Detele)
+            if (modeForm == ModeForm.Update)
+            {
+                permissions.ForEach(permission =>
                 {
-                    permissionsDelete.Add(permission);
-                }
-            });
+                    if (permission.State == State.Add)
+                    {
+                        permissionsAdd.Add(permission);
+                    }
+
+                    if (permission.State == State.Detele)
+                    {
+                        permissionsDelete.Add(permission);
+                    }
+                });
+            }
+
         }
     }
 }

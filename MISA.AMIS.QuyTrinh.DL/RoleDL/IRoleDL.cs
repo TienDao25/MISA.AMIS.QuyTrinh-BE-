@@ -41,7 +41,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
         /// <param name="permissionsDelete">Danh sách quyền xóa</param>
         /// <returns></returns>
         /// CreatedBy: TienDao (05/01/2023)
-        public int InsertRole(RequestClient requestClient, List<SubSystemAndPermission> permissionsAdd, List<SubSystemAndPermission> permissionsDelete);
+        public int InsertRole(RequestClient requestClient, List<SubSystemAndPermission> permissionsAdd);
 
         /// <summary>
         /// DL Sửa vai trò

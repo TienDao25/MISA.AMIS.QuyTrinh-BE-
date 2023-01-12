@@ -43,7 +43,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
             parameters.Add("@roleStatus", roleStatus);
 
             //Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            using (var mySqlConnection = CreateDBConnection())
             {
                 //Thực hiện gọi vào DB
                 var results = mySqlConnection.QueryMultiple(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
@@ -85,12 +85,14 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
             var parameters = new DynamicParameters();
             parameters.Add("@RoleID", roleID);
             // Thực hiện gọi vào DB
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            using (var mySqlConnection = CreateDBConnection())
             {
                 var results = mySqlConnection.QueryMultiple(sql: storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
 
                 var result1 = results.Read().ToList();
                 var result2 = results.Read().ToList()[0];
+
+                //Nếu DB vai trò không có phân quyền nào
                 if (result1.Count == 0)
                 {
                     var role = new Role
@@ -102,6 +104,10 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                     };
                     return role;
                 }
+                // DB trả về vai trò có phân quyền
+                // Thực hiện:
+                // - Gộp các quyền theo phân quyền
+                // - Gộp các phân quyền theo vai trò
                 else
                 {
                     var role = result1.GroupBy(x => (x.RoleID, x.RoleName, x.RoleDescribe, x.RoleStatus))
@@ -141,7 +147,7 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
         /// <param name="permissionsDelete">Danh sách quyền xóa</param>
         /// <returns></returns>
         /// CreatedBy: TienDao (05/01/2023)
-        public int InsertRole(RequestClient requestClient, List<SubSystemAndPermission> permissionsAdd, List<SubSystemAndPermission> permissionsDelete)
+        public int InsertRole(RequestClient requestClient, List<SubSystemAndPermission> permissionsAdd)
         {
             //Chuẩn bị câu lệnh SQL
             string storedProcedureName = Procedure.INSERT_ROLE;
@@ -156,9 +162,12 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
             //string user = requestClient.User;
             string user = "Tiến Đạo";
 
+            //Chuỗi danh sách Quyền - Phân quyền thêm mới
             string listSubPerAdd = "";
-            string listSubPerDelete = "";
+
             int index = 0;
+
+            //Thực hiện nối chuỗi
             permissionsAdd.ForEach((permission) =>
             {
                 listSubPerAdd += "('" + roleID + "','" + permission.SubSystemID + "','"
@@ -166,16 +175,6 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                 if (index < permissionsAdd.Count - 1)
                 {
                     listSubPerAdd += ",";
-                }
-                index++;
-            });
-            index = 0;
-            permissionsDelete.ForEach((permission) =>
-            {
-                listSubPerDelete += "('" + permission.SubSystemID + "','" + permission.PermissionID + "')";
-                if (index < permissionsDelete.Count - 1)
-                {
-                    listSubPerDelete += ",";
                 }
                 index++;
             });
@@ -188,21 +187,19 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
             parameters.Add("@CreatedBy", user);
 
             parameters.Add("@ListSubPerAdd", listSubPerAdd);
-            parameters.Add("@ListSubPerDelete", listSubPerDelete);
 
             int numberOfRowsAffected = 0;
             //Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            using (var mySqlConnection = CreateDBConnection())
             {
                 mySqlConnection.Open();
                 using (var transaction = mySqlConnection.BeginTransaction())
                 {
                     try
                     {
-                        //numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
                         numberOfRowsAffected = mySqlConnection.QueryFirst<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
 
-                        if (numberOfRowsAffected == permissionsDelete.Count + permissionsAdd.Count + 1)
+                        if (numberOfRowsAffected == permissionsAdd.Count + 1)
                         {
                             transaction.Commit();
                         }
@@ -242,11 +239,14 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
             string roleCode = requestClient.RoleCode;
             string roleDescription = requestClient.RoleDescription;
             string presentTime = "NOW()";
-            //string user = requestClient.User;
             string user = "Tiến Đạo";
 
+            //Chuỗi danh sách Quyền - Phân quyền thêm mới
             string listSubPerAdd = "";
+
+            //Chuỗi danh sách Quyền - Phân quyền xóa
             string listSubPerDelete = "";
+
             int index = 0;
             permissionsAdd.ForEach((permission) =>
             {
@@ -275,20 +275,18 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
             parameters.Add("@RoleDescription", roleDescription);
             parameters.Add("@ModifiedDate", DateTime.Now);
             parameters.Add("@ModifiedBy", user);
-
             parameters.Add("@ListSubPerAdd", listSubPerAdd);
             parameters.Add("@ListSubPerDelete", listSubPerDelete);
 
             int numberOfRowsAffected = 0;
             //Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            using (var mySqlConnection = CreateDBConnection())
             {
                 mySqlConnection.Open();
                 using (var transaction = mySqlConnection.BeginTransaction())
                 {
                     try
                     {
-                        //numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
                         numberOfRowsAffected = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
 
                         if (numberOfRowsAffected == permissionsDelete.Count + permissionsAdd.Count + 1)

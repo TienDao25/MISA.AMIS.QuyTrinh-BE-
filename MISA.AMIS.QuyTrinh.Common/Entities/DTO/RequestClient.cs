@@ -16,6 +16,7 @@ namespace MISA.AMIS.QuyTrinh.Common.Entities.DTO
         /// <summary>
         /// Loại form
         /// </summary>
+        
         public ModeForm ModeForm { get; set; }
 
         /// <summary>

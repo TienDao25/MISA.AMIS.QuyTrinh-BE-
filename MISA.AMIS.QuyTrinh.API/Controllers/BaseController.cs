@@ -67,6 +67,47 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
         }
 
         /// <summary>
+        /// API thêm mới bản ghi
+        /// </summary>
+        /// <param name="entity">Thông tin cần thêm</param>
+        /// <returns>ID bản ghi được thêm</returns>
+        /// Author: TienDao (11/01/2023)
+        [HttpPost("TestBaseInsert")]
+        public virtual IActionResult Insert([FromBody] List<T> entities)
+        {
+            try
+            {
+                var result = _baseBL.Insert(entities);
+                // Thành công: Trả về dữ liệu cho FE
+                if (!result.IsSuccess)
+                {
+                    return StatusCode(StatusCodes.Status400BadRequest, new ErrorResult
+                    {
+                        ErrorCode = AMISErrorCode.InsertError,
+                        DevMsg = Resource.DevMsg_InsertError,
+                        UserMsg = Resource.UserMsg_InsertError,
+                        MoreInfo = Resource.MoreInfo,
+                        TraceId = HttpContext.TraceIdentifier
+                    });
+                }
+                return StatusCode(StatusCodes.Status200OK);
+            }
+            //Try catch exception 
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResult
+                {
+                    ErrorCode = AMISErrorCode.Exception,
+                    DevMsg = Resource.DevMsg_Exception,
+                    UserMsg = Resource.UserMsg_Exception,
+                    MoreInfo = Resource.MoreInfo_Exception,
+                    TraceId = HttpContext.TraceIdentifier
+                });
+            }
+        }
+
+        /// <summary>
         /// API xóa 1 bản ghi theo ID
         /// </summary>
         /// <param name="recordID">ID bản ghi</param>
@@ -95,6 +136,34 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
                 return StatusCode(StatusCodes.Status200OK);
             }
             //Try catch exception 
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResult
+                {
+                    ErrorCode = AMISErrorCode.Exception,
+                    DevMsg = Resource.DevMsg_Exception,
+                    UserMsg = Resource.UserMsg_Exception,
+                    MoreInfo = Resource.MoreInfo_Exception,
+                    TraceId = HttpContext.TraceIdentifier
+                });
+            }
+        }
+
+        /// <summary>
+        /// API lấy danh sách bản ghi theo bộ lọc và phân trang
+        /// </summary>
+        /// <returns>Danh sách bản ghi và tổng số bản ghi</returns>
+        /// Created by: TienDao (11/01/2023)
+        [HttpPost("BaseFilter")]
+        public IActionResult GetRecordByFilterAndPaging([FromBody] RequestFilter requestFilter)
+        {
+            try
+            {
+                var result = _baseBL.GetRecordByFilterAndPaging(requestFilter.Filter, requestFilter.Limit, requestFilter.Offset, requestFilter.Sort);
+                return StatusCode(StatusCodes.Status200OK, result);
+
+            }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);

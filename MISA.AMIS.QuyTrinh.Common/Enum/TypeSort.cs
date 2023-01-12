@@ -19,11 +19,11 @@ namespace MISA.AMIS.QuyTrinh.Common.Enum
         /// <summary>
         /// Tăng dần
         /// </summary>
-        Ascending = 0,
+        Asc = 0,
 
         /// <summary>
         /// Giảm dần
         /// </summary>
-        Descending = 1,
+        Desc = 1,
     }
 }

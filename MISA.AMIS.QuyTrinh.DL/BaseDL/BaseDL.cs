@@ -1,8 +1,11 @@
 ﻿using Dapper;
 using MISA.AMIS.QuyTrinh.Common.Const;
+using MISA.AMIS.QuyTrinh.Common.Entities;
+using MISA.AMIS.QuyTrinh.Common.Entities.DTO;
 using MySqlConnector;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +14,15 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
 {
     public class BaseDL<T> : IBaseDL<T> where T : class
     {
+        /// <summary>
+        /// Khởi tạo connection tới database
+        /// </summary>
+        /// <returns>New DB connection</returns>
+        public IDbConnection CreateDBConnection()
+        {
+            return new MySqlConnection(DataBaseContext.ConnectionString);
+        }
+
         /// <summary>
         /// Lấy danh sách tất cả bản ghi
         /// </summary>
@@ -25,7 +37,7 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
             // Chuẩn bị tham số đầu vào
 
             // Thực hiện gọi vào DB
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            using (var mySqlConnection = CreateDBConnection())
             {
                 records = (List<T>)mySqlConnection.Query<T>(sql: storedProcedureName, commandType: System.Data.CommandType.StoredProcedure);
             }
@@ -51,7 +63,7 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
 
             int numberOfRowsAffected = 0;
             // Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            using (var mySqlConnection = CreateDBConnection())
             {
                 mySqlConnection.Open();
                 using (var transaction = mySqlConnection.BeginTransaction())
@@ -91,7 +103,7 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
 
 
             // Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString))
+            using (var mySqlConnection = CreateDBConnection())
             {
                 int numberRecords = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
                 if (numberRecords == 0)
@@ -99,6 +111,48 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
                     return false;
                 }
                 return true;
+            }
+        }
+
+        /// <summary>
+        /// API lấy danh sách bản ghi theo bộ lọc và phân trang
+        /// </summary>
+        /// <returns>Danh sách bản ghi và tổng số bản ghi</returns>
+        /// Created by: TienDao (11/01/2023)
+        public PagingResult<T> GetRecordByFilterAndPaging(string queryWhere,string paging)
+        {
+            //Chuẩn bị câu lệnh SQL
+            string storedProcedureName = String.Format(Procedure.FILTER_PAGING, typeof(T).Name);
+
+            //Chuẩn bị tham số đầu vào
+            var parameters = new DynamicParameters();
+            parameters.Add("@QueryWhere", queryWhere);
+            parameters.Add("@Paging", paging);
+
+            // Khởi tạo kết nối tới DB MySQL
+            using (var mySqlConnection = CreateDBConnection())
+            {
+                var results = mySqlConnection.QueryMultiple(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
+
+                var roles = results.Read<T>().ToList();
+                long TotalRecords = results.Read<long>().Single();
+
+                //Xử lý kết quả trả về
+                if (roles != null)
+                {
+                    return new PagingResult<T>
+                    {
+                        ListData = roles,
+                        TotalRecords = TotalRecords
+                    };
+                }
+                // không có bản ghi nào trong db
+                return new PagingResult<T>
+                {
+                    ListData = new List<T>(),
+                    TotalRecords = 0
+                };
+
             }
         }
     }
