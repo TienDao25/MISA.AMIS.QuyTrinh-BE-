@@ -18,59 +18,6 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
     public class RoleDL : BaseDL<Role>, IRoleDL
     {
         /// <summary>
-        /// lấy danh sách vai trò theo bộ lọc và phân trang
-        /// </summary>
-        /// <param name="keyword">Từ khóa muốn tìm kiếm</param>
-        /// <param name="limit">Số bản ghi muốn lấy</param>
-        /// <param name="offset">Vị trí của bản ghi bắt đầu lấy</param>
-        /// <param name="fieldSort">Trường sắp xếp</param>
-        /// <param name="typeSort">Kiểu sắp xếp</param>
-        /// <param name="roleStatus">Trạng thái muốn lọc</param>
-        /// <returns>Danh sách vai trò và tổng số bản ghi</returns>
-        /// Created by: TienDao (26/12/2022)
-        public PagingResult<Role> GetRolesByFilterAndPaging(string keyword, int limit, int offset, string fieldSort, TypeSort typeSort, RoleStatus roleStatus)
-        {
-            //Chuẩn bị câu lệnh SQL
-            string storedProcedureName = Procedure.GET_ROLES_BY_FILTER_PAGING;
-
-            //Chuẩn bị tham số đầu vào
-            var parameters = new DynamicParameters();
-            parameters.Add("@Keyword", keyword);
-            parameters.Add("@Limit", limit);
-            parameters.Add("@Offset", offset);
-            parameters.Add("@FieldSort", fieldSort);
-            parameters.Add("@TypeSort", typeSort);
-            parameters.Add("@roleStatus", roleStatus);
-
-            //Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = CreateDBConnection())
-            {
-                //Thực hiện gọi vào DB
-                var results = mySqlConnection.QueryMultiple(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
-
-                var roles = results.Read<Role>().ToList();
-                long TotalRecords = results.Read<long>().Single();
-
-                //Xử lý kết quả trả về
-                if (roles != null)
-                {
-                    return new PagingResult<Role>
-                    {
-                        ListData = roles,
-                        TotalRecords = TotalRecords
-                    };
-                }
-                // không có bản ghi nào trong db
-                return new PagingResult<Role>
-                {
-                    ListData = new List<Role>(),
-                    TotalRecords = 0
-                };
-
-            }
-        }
-
-        /// <summary>
         /// Lấy chi tiết 1 vai trò
         /// </summary>
         /// <param name="roleID">ID vai trò</param>
@@ -85,57 +32,53 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
             var parameters = new DynamicParameters();
             parameters.Add("@RoleID", roleID);
             // Thực hiện gọi vào DB
-            using (var mySqlConnection = CreateDBConnection())
+            OpenDB();
+            var results = mySqlConnection.QueryMultiple(sql: storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);            
+            var result1 = results.Read().ToList();
+            var result2 = results.Read().ToList()[0];
+            CloseDB();
+            //Nếu DB vai trò không có phân quyền nào
+            if (result1.Count == 0)
             {
-                var results = mySqlConnection.QueryMultiple(sql: storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
-
-                var result1 = results.Read().ToList();
-                var result2 = results.Read().ToList()[0];
-
-                //Nếu DB vai trò không có phân quyền nào
-                if (result1.Count == 0)
+                var role = new Role
                 {
-                    var role = new Role
-                    {
-                        RoleID = result2.RoleID,
-                        RoleName = result2.RoleName,
-                        RoleDescription = result2.RoleDescribe,
-                        RoleStatus = (RoleStatus)result2.RoleStatus,
-                    };
-                    return role;
-                }
-                // DB trả về vai trò có phân quyền
-                // Thực hiện:
-                // - Gộp các quyền theo phân quyền
-                // - Gộp các phân quyền theo vai trò
-                else
+                    RoleID = result2.RoleID,
+                    RoleName = result2.RoleName,
+                    RoleDescription = result2.RoleDescribe,
+                    RoleStatus = (RoleStatus)result2.RoleStatus,
+                };
+                return role;
+            }
+            // DB trả về vai trò có phân quyền
+            // Thực hiện:
+            // - Gộp các quyền theo phân quyền
+            // - Gộp các phân quyền theo vai trò
+            else
+            {
+                var role = result1.GroupBy(x => (x.RoleID, x.RoleName, x.RoleDescribe, x.RoleStatus))
+                .Select(g => new Role
                 {
-                    var role = result1.GroupBy(x => (x.RoleID, x.RoleName, x.RoleDescribe, x.RoleStatus))
-                    .Select(g => new Role
-                    {
-                        RoleID = g.Key.RoleID,
-                        RoleName = g.Key.RoleName,
-                        RoleDescription = g.Key.RoleDescribe,
-                        RoleStatus = (RoleStatus)g.Key.RoleStatus,
-                        ListSubsytemAndPermission = g.GroupBy(x => (x.SubSystemID, x.SubSystemCode, x.SubSystemName, x.SubSystemType))
-                            .Select(g => new SubSystem
-                            {
-                                SubSystemID = g.Key.SubSystemID,
-                                SubSystemCode = g.Key.SubSystemCode,
-                                SubSystemName = g.Key.SubSystemName,
-                                SubSystemType = (SubSystemType)g.Key.SubSystemType,
-                                ListPermissions = g.GroupBy(x => x)
-                                    .Select(g => new Permission
-                                    {
-                                        PermissionID = g.Key.PermissionID,
-                                        PermissionCode = g.Key.PermissionCode,
-                                        PermissionName = g.Key.PermissionName,
-                                    }).ToList()
-                            }).ToList()
-                    }).ToList()[0];
-                    return role;
-                }
-
+                    RoleID = g.Key.RoleID,
+                    RoleName = g.Key.RoleName,
+                    RoleDescription = g.Key.RoleDescribe,
+                    RoleStatus = (RoleStatus)g.Key.RoleStatus,
+                    ListSubsytemAndPermission = g.GroupBy(x => (x.SubSystemID, x.SubSystemCode, x.SubSystemName, x.SubSystemType))
+                        .Select(g => new SubSystem
+                        {
+                            SubSystemID = g.Key.SubSystemID,
+                            SubSystemCode = g.Key.SubSystemCode,
+                            SubSystemName = g.Key.SubSystemName,
+                            SubSystemType = (SubSystemType)g.Key.SubSystemType,
+                            ListPermissions = g.GroupBy(x => x)
+                                .Select(g => new Permission
+                                {
+                                    PermissionID = g.Key.PermissionID,
+                                    PermissionCode = g.Key.PermissionCode,
+                                    PermissionName = g.Key.PermissionName,
+                                }).ToList()
+                        }).ToList()
+                }).ToList()[0];
+                return role;
             }
         }
 
@@ -190,9 +133,8 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
 
             int numberOfRowsAffected = 0;
             //Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = CreateDBConnection())
-            {
-                mySqlConnection.Open();
+            OpenDB();
+            if (mySqlConnection != null)
                 using (var transaction = mySqlConnection.BeginTransaction())
                 {
                     try
@@ -202,10 +144,12 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                         if (numberOfRowsAffected == permissionsAdd.Count + 1)
                         {
                             transaction.Commit();
+                            CloseDB();
                         }
                         else
                         {
                             transaction.Rollback();
+                            CloseDB();
                         }
 
                     }
@@ -213,9 +157,9 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
                     {
                         Console.WriteLine(ex.Message);
                         transaction.Rollback();
+                        CloseDB();
                     }
                 }
-            }
             return numberOfRowsAffected;
         }
 
@@ -280,30 +224,31 @@ namespace MISA.AMIS.QuyTrinh.DL.RoleDL
 
             int numberOfRowsAffected = 0;
             //Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = CreateDBConnection())
+            OpenDB();
+            using (var transaction = mySqlConnection.BeginTransaction())
             {
-                mySqlConnection.Open();
-                using (var transaction = mySqlConnection.BeginTransaction())
+                try
                 {
-                    try
+                    numberOfRowsAffected = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
+
+                    if (numberOfRowsAffected == permissionsDelete.Count + permissionsAdd.Count + 1)
                     {
-                        numberOfRowsAffected = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
-
-                        if (numberOfRowsAffected == permissionsDelete.Count + permissionsAdd.Count + 1)
-                        {
-                            transaction.Commit();
-                        }
-                        else
-                        {
-                            transaction.Rollback();
-                        }
-
+                        transaction.Commit();
+                        CloseDB();
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Console.WriteLine(ex.Message);
+
                         transaction.Rollback();
+                        CloseDB();
                     }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    transaction.Rollback();
+                    CloseDB();
                 }
             }
             return numberOfRowsAffected;

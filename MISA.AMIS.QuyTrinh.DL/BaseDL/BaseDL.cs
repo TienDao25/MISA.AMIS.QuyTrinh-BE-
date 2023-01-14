@@ -14,6 +14,8 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
 {
     public class BaseDL<T> : IBaseDL<T> where T : class
     {
+        public IDbConnection? mySqlConnection = null;
+
         /// <summary>
         /// Khởi tạo connection tới database
         /// </summary>
@@ -21,6 +23,26 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
         public IDbConnection CreateDBConnection()
         {
             return new MySqlConnection(DataBaseContext.ConnectionString);
+        }
+
+        /// <summary>
+        /// Khởi tạo và mở connection tới database
+        /// </summary>
+        public void OpenDB()
+        {
+            mySqlConnection = new MySqlConnection(DataBaseContext.ConnectionString);
+            mySqlConnection.Open();
+        }
+
+        /// <summary>
+        /// Đóng connection tới database
+        /// </summary>
+        public void CloseDB()
+        {
+            if (mySqlConnection != null)
+            {
+                mySqlConnection.Close();
+            }
         }
 
         /// <summary>
@@ -37,10 +59,9 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
             // Chuẩn bị tham số đầu vào
 
             // Thực hiện gọi vào DB
-            using (var mySqlConnection = CreateDBConnection())
-            {
-                records = (List<T>)mySqlConnection.Query<T>(sql: storedProcedureName, commandType: System.Data.CommandType.StoredProcedure);
-            }
+            OpenDB();
+            records = (List<T>)mySqlConnection.Query<T>(sql: storedProcedureName, commandType: System.Data.CommandType.StoredProcedure);
+            CloseDB();
             return records;
         }
 
@@ -63,23 +84,24 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
 
             int numberOfRowsAffected = 0;
             // Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = CreateDBConnection())
+            OpenDB();
+            using (var transaction = mySqlConnection.BeginTransaction())
             {
-                mySqlConnection.Open();
-                using (var transaction = mySqlConnection.BeginTransaction())
+                try
                 {
-                    try
-                    {
-                        numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
-                        transaction.Commit();
+                    numberOfRowsAffected = mySqlConnection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
+                    transaction.Commit();
+                    CloseDB();
 
-                    }
-                    catch
-                    {
-                        numberOfRowsAffected = 0;
-                        transaction.Rollback();
-                    }
                 }
+                catch
+                {
+                    numberOfRowsAffected = 0;
+                    transaction.Rollback();
+                    CloseDB();
+
+                }
+
             }
             return numberOfRowsAffected;
         }
@@ -103,15 +125,15 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
 
 
             // Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = CreateDBConnection())
+            OpenDB();
+            int numberRecords = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
+            CloseDB();
+            if (numberRecords == 0)
             {
-                int numberRecords = mySqlConnection.QueryFirstOrDefault<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
-                if (numberRecords == 0)
-                {
-                    return false;
-                }
-                return true;
+                return false;
             }
+            return true;
+
         }
 
         /// <summary>
@@ -119,7 +141,7 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
         /// </summary>
         /// <returns>Danh sách bản ghi và tổng số bản ghi</returns>
         /// Created by: TienDao (11/01/2023)
-        public PagingResult<T> GetRecordByFilterAndPaging(string queryWhere,string paging)
+        public PagingResult<T> GetRecordByFilterAndPaging(string queryWhere, string paging)
         {
             //Chuẩn bị câu lệnh SQL
             string storedProcedureName = String.Format(Procedure.FILTER_PAGING, typeof(T).Name);
@@ -130,30 +152,80 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
             parameters.Add("@Paging", paging);
 
             // Khởi tạo kết nối tới DB MySQL
-            using (var mySqlConnection = CreateDBConnection())
+            OpenDB();
+            var results = mySqlConnection.QueryMultiple(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
+            
+            var roles = results.Read<T>().ToList();
+            long TotalRecords = results.Read<long>().Single();
+            CloseDB();
+            //Xử lý kết quả trả về
+            if (roles != null)
             {
-                var results = mySqlConnection.QueryMultiple(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
-
-                var roles = results.Read<T>().ToList();
-                long TotalRecords = results.Read<long>().Single();
-
-                //Xử lý kết quả trả về
-                if (roles != null)
-                {
-                    return new PagingResult<T>
-                    {
-                        ListData = roles,
-                        TotalRecords = TotalRecords
-                    };
-                }
-                // không có bản ghi nào trong db
                 return new PagingResult<T>
                 {
-                    ListData = new List<T>(),
-                    TotalRecords = 0
+                    ListData = roles,
+                    TotalRecords = TotalRecords
                 };
-
             }
+            // không có bản ghi nào trong db
+            return new PagingResult<T>
+            {
+                ListData = new List<T>(),
+                TotalRecords = 0
+            };
+        }
+
+        /// <summary>
+        /// Thêm mới bản ghi
+        /// </summary>
+        /// <param name="queryAdd">Bản ghi cha</param>
+        /// <param name="listAddDetail">Danh sách thông tin bản ghi con</param>
+        /// <param name="numberRows">Tổng số bản ghi cần thực hiện</param>
+        /// <returns>ID bản ghi được thêm</returns>
+        /// Author: TienDao (11/01/2023)
+        public int Insert(string queryAdd, List<string> listAddDetail, int numberRows)
+        {
+            //Chuẩn bị câu lệnh SQL
+            string storedProcedureName = String.Format(Procedure.INSERT, typeof(T).Name);
+
+            //Chuẩn bị tham số đầu vào
+            var parameters = new DynamicParameters();
+            parameters.Add($"@QueryAdd", queryAdd);
+            for (int i = 0; i < listAddDetail.Count; i++)
+            {
+                parameters.Add($"@QueryAddDetail{i}", listAddDetail[i]);
+            }
+
+            int numberOfRowsAffected = 0;
+            // Khởi tạo kết nối tới DB MySQL
+            OpenDB();
+            using (var transaction = mySqlConnection.BeginTransaction())
+            {
+                try
+                {
+                    numberOfRowsAffected = mySqlConnection.QueryFirst<int>(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure, transaction: transaction);
+
+                    if (numberOfRowsAffected == numberRows)
+                    {
+                        transaction.Commit();
+                        CloseDB();
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        CloseDB();
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    transaction.Rollback();
+                    CloseDB();
+                }
+            }
+
+            return numberOfRowsAffected;
         }
     }
 }

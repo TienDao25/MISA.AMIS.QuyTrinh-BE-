@@ -39,6 +39,11 @@ namespace MISA.AMIS.QuyTrinh.Common.Const
         public static string FILTER_PAGING = "Proc_{0}_FilterAndPaging";
 
         /// <summary>
+        /// Procedure tìm kiếm/lọc/phân trang
+        /// </summary>
+        public static string INSERT = "Proc_{0}_Insert";
+
+        /// <summary>
         /// Kiểm tra trùng
         /// </summary>
         public static string CHECK_DULICATE = "Proc_{0}_CheckDulicate_{1}";

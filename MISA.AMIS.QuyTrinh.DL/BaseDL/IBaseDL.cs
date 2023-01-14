@@ -49,5 +49,15 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
         /// <returns>Danh sách bản ghi và tổng số bản ghi</returns>
         /// Created by: TienDao (11/01/2023)
         public PagingResult<T> GetRecordByFilterAndPaging(string queryWhere, string paging);
+
+        /// <summary>
+        /// Thêm mới bản ghi
+        /// </summary>
+        /// <param name="queryAdd">Bản ghi cha</param>
+        /// <param name="numberRows">Tổng số bản ghi cần thực hiện</param>
+        /// <param name="listAddDetail">Danh sách thông tin bản ghi con</param>
+        /// <returns>ID bản ghi được thêm</returns>
+        /// Author: TienDao (11/01/2023)
+        public int Insert(string queryAdd, List<string> listAddDetail, int numberRows);
     }
 }
