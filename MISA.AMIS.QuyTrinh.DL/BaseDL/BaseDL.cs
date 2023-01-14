@@ -195,7 +195,6 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
             {
                 parameters.Add($"@QueryAddDetail{i}", listAddDetail[i]);
             }
-
             int numberOfRowsAffected = 0;
             // Khởi tạo kết nối tới DB MySQL
             OpenDB();
@@ -213,6 +212,7 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
                     else
                     {
                         transaction.Rollback();
+                        numberOfRowsAffected = 0;
                         CloseDB();
                     }
 

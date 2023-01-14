@@ -53,13 +53,10 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         /// Author: TienDao (11/01/2023)
         public virtual ResponseService Insert(List<T> entities)
         {
-            IDbConnection? connection = null;
-            IDbTransaction? transaction = null;
 
-            //Validate dữ liệu
             var validateFailures = new List<string>();
 
-            ValidateData(entities, validateFailures);
+            BeforeSave(entities, validateFailures);
             if (validateFailures.Count > 0)
             {
                 return new ResponseService()
@@ -69,77 +66,71 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
                 };
             }
 
-            //Xử lý, cắt ghép chuỗi trước khi lưu
-            string queryAdd = "";
-            List<string> listAddDetail = new List<string>();
-            int numberRows = 0;
+            //Lưu bản ghi
+            int numberOfRowsAffected = DoSave(entities);
 
-            BeforeSave(entities, out queryAdd, listAddDetail, out numberRows);
-
-            //Tạo connection
-            connection = _baseDL.CreateDBConnection();
-            connection.Open();
-
-            //Tạo transaction
-            transaction = connection.BeginTransaction();
-
-            //DoSave() 
-            int numberOfRowsAffected = _baseDL.Insert(queryAdd, listAddDetail, numberRows);
-            if (numberOfRowsAffected == numberRows)
+            if (numberOfRowsAffected == 0)
             {
                 return new ResponseService
                 {
-                    IsSuccess = true
+                    IsSuccess = false
                 };
             }
             return new ResponseService
             {
-                IsSuccess = false,
+                IsSuccess = true,
             };
 
             AfterSave();
         }
 
         /// <summary>
-        /// Xử lý, ghép chuỗi trước khi lưu
+        /// Lưu bản ghi
         /// </summary>
-        /// <param name="entities"></param>
-        /// <param name="queryAdd"></param>
-        /// <param name="listAddDetail"></param>
-        /// <param name="numberRows"></param>
-        private void BeforeSave(List<T> entities, out string queryAdd, List<string> listAddDetail, out int numberRows)
+        /// <param name="entities">Danh sách bản ghi</param>
+        /// <returns>Số hàng ảnh hưởng</returns>
+        public virtual int DoSave(List<T> entities)
         {
+            int numberRows = 0;
+            string queryAdd = "";
+            List<string> queryAddRecord = new List<string>();
+            var listAddDetail = new List<string>();
+            
             Guid newID = Guid.NewGuid();
             List<string> values = new List<string>();
+            List<string> addDetail = new List<string>();
             var listDetail = new List<object>();
+            int count = 0;
             entities.ForEach(entity =>
             {
+                listDetail = new List<object>();
                 //Xử lý, add các giá trị thực thể vào mảng
                 List<string> value = BuildListStringForSave(entity, newID, listDetail);
 
                 //Nối các phần tử trong mảng
                 values.Add($"({string.Join(",", value.Select(v => (string.Equals(v, "NOW()") || string.Equals(v, "null") ? v : ("'" + v + "'"))))})");
+                queryAddRecord.Add(string.Join(",", values));
             });
 
             //Query thêm mới bản ghi cha
-            queryAdd = string.Join(",", values);
+            queryAdd = string.Join(",", queryAddRecord);
 
             //Query thêm mới các bản ghi con
-            int count = 0;
             if (listDetail.Count > 0)
             {
+                int i = 0;
                 foreach (var detail in listDetail)
                 {
                     var collectionDetail = (ICollection)detail;
                     count += collectionDetail.Count;
 
                     //Xử lý, thêm các giá trị bản ghi detail vào mảng
-                    List<string> addDetail = BuildListStringForDetail(newID, collectionDetail);
-
+                    addDetail = BuildListStringForDetail(newID, collectionDetail);
                     listAddDetail.Add(string.Join(",", addDetail));
                 }
             }
             numberRows = count + 1;
+            return _baseDL.Insert(queryAdd, listAddDetail, numberRows);
         }
 
         /// <summary>
@@ -414,7 +405,7 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         }
 
         /// <summary>
-        /// Sau khi lưu, dùng để lưu thêm detail
+        /// Sau khi lưu
         /// </summary>
         public virtual void AfterSave()
         {
@@ -422,11 +413,11 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         }
 
         /// <summary>
-        /// Validate dữ liệu
+        /// Xử lý trước khi lưu
         /// </summary>
         /// <param name="entities">Danh sách đối tượng</param>
         /// <param name="validateFailures">Mảng chứa lỗi</param>
-        public virtual void ValidateData(List<T> entities, List<string> validateFailures)
+        public virtual void BeforeSave(List<T> entities, List<string> validateFailures)
         {
             // do smt
             foreach (T entity in entities)
@@ -450,11 +441,11 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         /// </summary>
         public virtual int DoSave(T entity, Guid? id = null)
         {
-            if(id== null)
+            if (id == null)
             {
                 return 1;
             }
-                return 1;
+            return 1;
         }
         #endregion
     }

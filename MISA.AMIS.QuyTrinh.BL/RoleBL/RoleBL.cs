@@ -46,22 +46,6 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
         }
 
         /// <summary>
-        /// lấy danh sách vai trò theo bộ lọc và phân trang
-        /// </summary>
-        /// <param name="keyword">Từ khóa muốn tìm kiếm</param>
-        /// <param name="limit">Số bản ghi muốn lấy</param>
-        /// <param name="offset">Vị trí của bản ghi bắt đầu lấy</param>
-        /// <param name="fieldSort">Trường sắp xếp</param>
-        /// <param name="typeSort">Kiểu sắp xếp</param>
-        /// <param name="roleStatus">Trạng thái muốn lọc</param>
-        /// <returns>Danh sách vai trò và tổng số bản ghi</returns>
-        /// Created by: TienDao (26/12/2022)
-        public PagingResult<Role> GetRolesByFilterAndPaging(string keyWord, int limit, int offset, string fieldSort, TypeSort typeSort, RoleStatus roleStatus)
-        {
-            return _roleDL.GetRolesByFilterAndPaging(keyWord, limit, offset, fieldSort, typeSort, roleStatus);
-        }
-
-        /// <summary>
         /// Check bắt buộc
         /// </summary>
         /// <param name="role">Vai trò</param>
@@ -221,5 +205,32 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
             }
 
         }
+
+        /// <summary>
+        /// Xử lý trước khi lưu, thêm validate tên trùng
+        /// </summary>
+        /// <param name="entities">Danh sách đối tượng</param>
+        /// <param name="validateFailures">Mảng chứa lỗi</param>
+        public override void BeforeSave(List<Role> entities, List<string> validateFailures)
+        {
+            base.BeforeSave(entities, validateFailures);
+            //Kiểm tra trùng tên trong list
+            if (entities.GroupBy(x => x.RoleName).Any(g => g.Count() > 1))
+            {
+                validateFailures.Add(Resource.Error_DulicateRoleName);
+                return;
+            }
+
+            foreach (Role role in entities)
+            {
+                //Kiểm tra trùng tên với các bản ghi trong DB
+                if (CheckDulicate("RoleName", role.RoleName, null) == true)
+                {
+                    validateFailures.Add(Resource.Error_DulicateRoleName);
+                    return;
+                }
+            }
+        }
+
     }
 }

@@ -72,7 +72,7 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
         /// <param name="entity">Thông tin cần thêm</param>
         /// <returns>ID bản ghi được thêm</returns>
         /// Author: TienDao (11/01/2023)
-        [HttpPost("TestBaseInsert")]
+        [HttpPost]
         public virtual IActionResult Insert([FromBody] List<T> entities)
         {
             try
@@ -86,7 +86,7 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
                         ErrorCode = AMISErrorCode.InsertError,
                         DevMsg = Resource.DevMsg_InsertError,
                         UserMsg = Resource.UserMsg_InsertError,
-                        MoreInfo = Resource.MoreInfo,
+                        MoreInfo = result.Data,
                         TraceId = HttpContext.TraceIdentifier
                     });
                 }
