@@ -95,42 +95,73 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
             string queryAdd = "";
             List<string> queryAddRecord = new List<string>();
             var listAddDetail = new List<string>();
-            
-            Guid newID = Guid.NewGuid();
+
+
             List<string> values = new List<string>();
-            List<string> addDetail = new List<string>();
-            var listDetail = new List<object>();
-            int count = 0;
+            var listDetail = new List<List<object>>();
             entities.ForEach(entity =>
             {
-                listDetail = new List<object>();
+                numberRows++;
+                Guid newID = Guid.NewGuid();
+                listDetail = new List<List<object>>();
                 //Xử lý, add các giá trị thực thể vào mảng
-                List<string> value = BuildListStringForSave(entity, newID, listDetail);
+                List<string> value = BuildListStringForSave(entity, newID, ref listDetail);
 
                 //Nối các phần tử trong mảng
-                values.Add($"({string.Join(",", value.Select(v => (string.Equals(v, "NOW()") || string.Equals(v, "null") ? v : ("'" + v + "'"))))})");
-                queryAddRecord.Add(string.Join(",", values));
+                queryAddRecord.Add($"({string.Join(",", value.Select(v => (string.Equals(v, "NOW()") || string.Equals(v, "null") ? v : ("'" + v + "'"))))})");
+                if (listDetail.Count > 0)
+                {
+                    BuildStringDetail(ref numberRows, ref listAddDetail, listDetail, newID);
+                }
             });
 
             //Query thêm mới bản ghi cha
             queryAdd = string.Join(",", queryAddRecord);
 
             //Query thêm mới các bản ghi con
-            if (listDetail.Count > 0)
+            listAddDetail.RemoveAll(item => item == null);
+
+            return _baseDL.Insert(queryAdd, listAddDetail, numberRows);
+        }
+
+        /// <summary>
+        /// Build câu query thêm mới các bản chi tiết
+        /// </summary>
+        /// <param name="numberRows"></param>
+        /// <param name="listAddDetail"></param>
+        /// <param name="listDetail"></param>
+        /// <param name="newID"></param>
+        private void BuildStringDetail(ref int numberRows, ref List<string> listAddDetail, List<List<object>> listDetail, Guid newID)
+        {
+            if (listAddDetail.Count == 0)
             {
-                int i = 0;
-                foreach (var detail in listDetail)
+                listAddDetail = new string[listDetail.Count].ToList();
+            }
+            int i = 0;
+            foreach (var detail in listDetail)
+            {
+                var recordDetail = new List<string>();
+                if (detail != null)
                 {
                     var collectionDetail = (ICollection)detail;
-                    count += collectionDetail.Count;
+                    numberRows += collectionDetail.Count;
 
                     //Xử lý, thêm các giá trị bản ghi detail vào mảng
-                    addDetail = BuildListStringForDetail(newID, collectionDetail);
-                    listAddDetail.Add(string.Join(",", addDetail));
+                    List<string> addDetail = BuildListStringForDetail(newID, collectionDetail);
+                    if (addDetail.Count > 0)
+                    {
+                        if (listAddDetail[i] == null)
+                        {
+                            listAddDetail[i] = string.Join(",", addDetail);
+                        }
+                        else
+                        {
+                            listAddDetail[i] += "," + string.Join(",", addDetail);
+                        }
+                    }
                 }
+                i++;
             }
-            numberRows = count + 1;
-            return _baseDL.Insert(queryAdd, listAddDetail, numberRows);
         }
 
         /// <summary>
@@ -184,13 +215,22 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         /// <param name="newID">ID mới của đối tượng</param>
         /// <param name="listDetail">Danh sách mảng các giá trị của các trường detail</param>
         /// <returns></returns>
-        private List<string> BuildListStringForSave(T entity, Guid newID, List<object> listDetail)
+        private List<string> BuildListStringForSave(T entity, Guid newID, ref List<List<object>> listDetail)
         {
             //Lấy danh sách property
             var properties = typeof(T).GetProperties();
             List<string> value = new List<string>();
+            if (listDetail.Count == 0)
+            {
+                listDetail = new List<object>[properties.Length].ToList();
+            }
+            int i = 0;
             foreach (var property in properties)
             {
+                if (listDetail[i] == null)
+                {
+                    listDetail[i] = new List<object>();
+                }
                 var propertyName = property.Name;
                 var requiredAttribute = (RequiredAttribute?)Attribute.GetCustomAttribute(property, typeof(RequiredAttribute));
                 var manyToManyAttribute = (ManyToManyAttribute?)Attribute.GetCustomAttribute(property, typeof(ManyToManyAttribute));
@@ -219,12 +259,17 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
                 }
                 else
                 {
-                    if (manyToManyAttribute != null)
+                    if (manyToManyAttribute != null && property.GetValue(entity) != null)
                     {
-                        listDetail.Add(property.GetValue(entity));
+                        foreach (var item in (ICollection)property.GetValue(entity))
+                        {
+                            listDetail[i].Add(item);
+                        }
+                        i++;
                     }
                 }
             }
+            listDetail.RemoveAll(item => item == null);
             return value;
         }
 

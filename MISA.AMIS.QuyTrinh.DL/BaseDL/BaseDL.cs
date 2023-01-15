@@ -192,7 +192,7 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
             var parameters = new DynamicParameters();
             parameters.Add($"@QueryAdd", queryAdd);
             for (int i = 0; i < listAddDetail.Count; i++)
-            {
+            {   
                 parameters.Add($"@QueryAddDetail{i}", listAddDetail[i]);
             }
             int numberOfRowsAffected = 0;
