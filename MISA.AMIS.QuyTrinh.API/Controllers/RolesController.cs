@@ -67,52 +67,6 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
             }
         }
 
-        ///// <summary>
-        ///// Thêm mới vai trò
-        ///// </summary>
-        ///// <param name="requestClient">Request client gửi về</param>
-        ///// <returns></returns>
-        ///// CreatedBy: TienDao (05/01/2023)
-        //[HttpPost]
-        //public IActionResult InsertRole([FromBody] RequestClient requestClient)
-        //{
-        //    try
-        //    {
-        //        // thực hiện thêm mới dữ liệu
-        //        var result = _roleBL.InsertRole(requestClient);
-
-        //        //Thành công
-        //        if (result.IsSuccess == true)
-        //        {
-        //            return StatusCode(StatusCodes.Status201Created);
-        //        }
-        //        else
-        //        {
-        //            return StatusCode(StatusCodes.Status400BadRequest, new ErrorResult
-        //            {
-        //                ErrorCode = AMISErrorCode.InsertError,
-        //                DevMsg = Resource.DevMsg_InsertError,
-        //                UserMsg = Resource.UserMsg_InsertError,
-        //                MoreInfo = result.Data,
-        //                TraceId = HttpContext.TraceIdentifier
-        //            });
-        //        }
-
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Console.WriteLine(e.Message);
-        //        return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResult
-        //        {
-        //            ErrorCode = AMISErrorCode.Exception,
-        //            DevMsg = Resource.DevMsg_Exception,
-        //            UserMsg = Resource.UserMsg_Exception,
-        //            MoreInfo = Resource.MoreInfo_Exception,
-        //            TraceId = HttpContext.TraceIdentifier
-        //        });
-        //    }
-        //}
-
         /// <summary>
         /// Cập nhật vai trò
         /// </summary>

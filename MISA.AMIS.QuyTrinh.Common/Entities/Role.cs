@@ -32,7 +32,7 @@ namespace MISA.AMIS.QuyTrinh.Common.Entities
         /// </summary> 
         [Required(ErrorMessage = "Tên vai trò không được để trống")]
         [Unique]
-        public string RoleName { get; set; }
+        public string? RoleName { get; set; }
 
         /// <summary>
         /// Mô tả vai trò

@@ -68,7 +68,7 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
 
             //Lưu bản ghi
             int numberOfRowsAffected = DoSave(entities);
-
+            AfterSave();
             if (numberOfRowsAffected == 0)
             {
                 return new ResponseService
@@ -81,7 +81,7 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
                 IsSuccess = true,
             };
 
-            AfterSave();
+            
         }
 
         /// <summary>
@@ -91,14 +91,11 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         /// <returns>Số hàng ảnh hưởng</returns>
         public virtual int DoSave(List<T> entities)
         {
-            int numberRows = 0;
-            string queryAdd = "";
-            List<string> queryAddRecord = new List<string>();
-            var listAddDetail = new List<string>();
-
-
-            List<string> values = new List<string>();
-            var listDetail = new List<List<object>>();
+            int numberRows = 0; //số bản ghi cần thực hiện
+            string queryAdd = ""; //Câu thêm mới các bản ghi
+            List<string> queryAddRecord = new List<string>(); //Mảng danh sách các bản ghi sau khi đã xử lý
+            var listAddDetail = new List<string>();           // Mảng các câu thêm các bản ghi chi tiết tương ứng với mỗi trường n-n
+            var listDetail = new List<List<object>>(); //Mảng chứa các danh sách giá trị của trường n-n
             entities.ForEach(entity =>
             {
                 numberRows++;
@@ -232,7 +229,6 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
                     listDetail[i] = new List<object>();
                 }
                 var propertyName = property.Name;
-                var requiredAttribute = (RequiredAttribute?)Attribute.GetCustomAttribute(property, typeof(RequiredAttribute));
                 var manyToManyAttribute = (ManyToManyAttribute?)Attribute.GetCustomAttribute(property, typeof(ManyToManyAttribute));
                 var sqlIgnoreAttribute = (SqlIgnoreAttribute?)Attribute.GetCustomAttribute(property, typeof(SqlIgnoreAttribute));
                 var uniqueAttribute = (UniqueAttribute?)Attribute.GetCustomAttribute(property, typeof(UniqueAttribute));
@@ -252,6 +248,10 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
                     {
                         property.SetValue(entity, DateTime.Now, null);
                     }
+                    //if (propertyName.Equals($"ModifiedDate"))
+                    //{
+                    //    property.SetValue(entity, DateTime.Now, null);
+                    //}
                     var propertyValue = property.GetValue(entity);
 
                     //Add thêm phần tử vào mảng
@@ -277,7 +277,7 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         /// Nối chuối
         /// </summary>
         /// <param name="str">Chuỗi</param>
-        /// <param name="propertyValue"></param>
+        /// <param name="propertyValue">Obj giá trị</param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
         private List<string> ExpandValue(List<string> value, object? propertyValue)
@@ -375,9 +375,10 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
             foreach (Filter f in filter)
             {
                 if (!(string.IsNullOrEmpty(f.Column) && string.IsNullOrEmpty(f.Value)
-                    && string.IsNullOrEmpty(f.Relationship) && string.IsNullOrEmpty(f.Operator)))
+                    && string.IsNullOrEmpty(RemoveSpace(f.Relationship)) && string.IsNullOrEmpty(f.Operator)))
                 {
-                    f.Column = RemoveSpace(f.Column);
+                    //f.Column = RemoveSpace(f.Column);
+                    f.Column = (f.Column);
                     f.Operator = RemoveSpace(f.Operator);
                     f.Operator = RemoveSpace(f.Operator);
                     f.Value = SanitizeInput(f.Value);
@@ -439,7 +440,7 @@ namespace MISA.AMIS.QuyTrinh.BL.BaseBL
         private static string SanitizeInput(string input)
         {
             // Danh sách kí tự cần loại bỏ
-            string[] dangerousChars = new string[] { "'", "--", "/*", "*/", ";", "%", "_", "=" };
+            string[] dangerousChars = new string[] { "'", "--", ";", "%", "_", "=" };
             // loại bỏ các ký tự
             foreach (string dangerousChar in dangerousChars)
             {

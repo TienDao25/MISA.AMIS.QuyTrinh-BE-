@@ -199,7 +199,7 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
 
                     if (permission.State == State.Detele)
                     {
-                        permissionsDelete.Add(permission);
+                        permissionsDelete?.Add(permission);
                     }
                 });
             }
@@ -232,5 +232,10 @@ namespace MISA.AMIS.QuyTrinh.BL.RoleBL
             }
         }
 
+        public override int DoSave(List<Role> entities)
+        {
+            base.DoSave(entities);
+            return 0;
+        }
     }
 }

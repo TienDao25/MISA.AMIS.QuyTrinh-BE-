@@ -90,7 +90,7 @@ namespace MISA.AMIS.QuyTrinh.API.Controllers
                         TraceId = HttpContext.TraceIdentifier
                     });
                 }
-                return StatusCode(StatusCodes.Status200OK);
+                return StatusCode(StatusCodes.Status201Created);
             }
             //Try catch exception 
             catch (Exception e)

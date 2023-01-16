@@ -14,7 +14,7 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
 {
     public class BaseDL<T> : IBaseDL<T> where T : class
     {
-        public IDbConnection? mySqlConnection = null;
+        public IDbConnection? mySqlConnection;
 
         /// <summary>
         /// Khởi tạo connection tới database
@@ -154,7 +154,7 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
             // Khởi tạo kết nối tới DB MySQL
             OpenDB();
             var results = mySqlConnection.QueryMultiple(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
-            
+
             var roles = results.Read<T>().ToList();
             long TotalRecords = results.Read<long>().Single();
             CloseDB();
@@ -191,10 +191,14 @@ namespace MISA.AMIS.QuyTrinh.DL.BaseDL
             //Chuẩn bị tham số đầu vào
             var parameters = new DynamicParameters();
             parameters.Add($"@QueryAdd", queryAdd);
-            for (int i = 0; i < listAddDetail.Count; i++)
-            {   
-                parameters.Add($"@QueryAddDetail{i}", listAddDetail[i]);
+            if (listAddDetail.Count > 0)
+            {
+                for (int i = 0; i < listAddDetail.Count; i++)
+                {
+                    parameters.Add($"@QueryAddDetail{i}", listAddDetail[i]);
+                }
             }
+
             int numberOfRowsAffected = 0;
             // Khởi tạo kết nối tới DB MySQL
             OpenDB();
